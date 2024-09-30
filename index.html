@@ -18,12 +18,13 @@
             flex-direction: column;
             justify-content: space-between;
             min-height: 100vh;
-            position: relative; /* Content floats above */
+            position: relative;
         }
 
+        /* Header styling */
         header {
             display: flex;
-            justify-content: flex-start;
+            justify-content: space-between;
             align-items: flex-start;
             width: 100%;
             padding: 20px;
@@ -33,7 +34,7 @@
             z-index: 1000;
         }
 
-        /* Logo box on the left side */
+        /* Separate box for MH logo */
         .logo-box {
             display: flex;
             flex-direction: column;
@@ -41,8 +42,6 @@
             align-items: center;
             border: 2px solid black;
             padding: 20px;
-            max-width: 300px;
-            width: 100%;
             background-color: #f0f0f0;
         }
 
@@ -51,15 +50,25 @@
             font-weight: bold;
             text-align: center;
             cursor: pointer;
-            margin-bottom: 10px;
+        }
+
+        /* Separate box for description */
+        .description-box {
+            border: 2px solid black;
+            padding: 10px;
+            max-width: 300px;
+            background-color: #f0f0f0;
+            position: absolute;
+            left: 0; /* Make the description box touch the left side */
+            top: 150px; /* Adjust as needed to position it below the header */
         }
 
         .description {
-            padding-top: 10px;
-            text-align: center;
+            text-align: left; /* Left-align the text */
             font-size: 18px;
         }
 
+        /* Navbar styling */
         nav {
             display: flex;
             justify-content: flex-end;
@@ -96,20 +105,30 @@
     </style>
 </head>
 <body>
+    <!-- Header with logo and navbar -->
     <header>
+        <!-- Separate box for MH logo -->
         <div class="logo-box">
             <div class="logo">MH</div>
-            <div class="description">website where I put some of my stuff, both professional and not</div>
         </div>
+        <!-- Navigation -->
         <nav>
             <ul>
-                <li><a href="#about">about</a></li>
-                <li><a href="#cv">cv</a></li>
-                <li><a href="#projects">projects</a></li>
-                <li><a href="#art">art</a></li>
+                <li><a href="about.html">about</a></li>
+                <li><a href="cv.html">cv</a></li>
+                <li><a href="projects.html">projects</a></li>
+                <li><a href="art.html">art</a></li>
+                <li><a href="contact.html">contact</a></li>
             </ul>
         </nav>
     </header>
+
+    <!-- Separate box for description touching the left side of the window -->
+    <div class="description-box">
+        <div class="description">
+            website where I put my stuff, both professional and not
+        </div>
+    </div>
 
     <!-- Main interactive area for blobs -->
     <main>
@@ -118,137 +137,8 @@
         </div>
     </main>
 
-    <!-- Include Paper.js library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.15/paper-full.min.js"></script>
-
-    <!-- Paper.js script to create and smooth shapes -->
-    <script>
-        let canvas = document.getElementById('myCanvas');
-        paper.setup(canvas);
-
-        // Ensure the canvas matches the full window size
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            paper.view.viewSize = new paper.Size(window.innerWidth, window.innerHeight);
-        }
-
-        // Resize canvas when window is resized
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        // Store all blobs in an array
-        let blobs = [];
-
-        // Function to create organic blobs with interactivity
-        function createBlob(position, radius, segments, color, link) {
-            let path = new paper.Path();
-            path.strokeColor = color;
-            path.fillColor = color;
-
-            // Create the organic shape with random points
-            for (let i = 0; i < segments; i++) {
-                let angle = (360 / segments) * i;
-                let offset = new paper.Point({
-                    angle: angle,
-                    length: radius + Math.random() * 20 - 10  // Randomize the length for organic shapes
-                });
-                path.add(position.add(offset));
-            }
-            path.closed = true;
-            path.smooth();  // Smooth the path to make it organic
-
-            // Store the blob details for crown shyness effect
-            blobs.push({ path: path, position: position, radius: radius });
-
-            // Interactivity: Change color on hover
-            path.onMouseEnter = function() {
-                path.fillColor = '#FFD700';  // Change color on hover
-            };
-
-            path.onMouseLeave = function() {
-                path.fillColor = color;  // Revert to original color when mouse leaves
-            };
-
-            // Interactivity: Redirect on click
-            path.onClick = function() {
-                window.location.href = link;  // Redirect to the link when clicked
-            };
-
-            return path;
-        }
-
-        // Function to apply crown shyness effect (push blobs away from each other)
-        function applyCrownShyness() {
-            for (let i = 0; i < blobs.length; i++) {
-                for (let j = i + 1; j < blobs.length; j++) {
-                    let blobA = blobs[i];
-                    let blobB = blobs[j];
-                    let distance = blobA.position.getDistance(blobB.position);
-
-                    // Reduced minimum distance to bring blobs closer
-                    let minDistance = blobA.radius + blobB.radius + 5;  // Smaller buffer for closer blobs
-
-                    if (distance < minDistance) {
-                        // Calculate repulsion vector to push blobs apart
-                        let repulsion = blobA.position.subtract(blobB.position).normalize();
-                        let moveDistance = (minDistance - distance) / 2;
-                        
-                        // Apply the movement to both blobs equally
-                        blobA.position = blobA.position.add(repulsion.multiply(moveDistance));
-                        blobB.position = blobB.position.subtract(repulsion.multiply(moveDistance));
-                        
-                        // Move the paths accordingly
-                        blobA.path.position = blobA.position;
-                        blobB.path.position = blobB.position;
-                        
-                        // Deform the shapes slightly for crown shyness effect
-                        deformBlobs(blobA.path, blobB.path, repulsion, moveDistance);
-                    }
-                }
-            }
-        }
-
-        // Deform blobs' edges to simulate crown shyness-like interaction
-        function deformBlobs(pathA, pathB, repulsion, moveDistance) {
-            for (let i = 0; i < pathA.segments.length; i++) {
-                let pointA = pathA.segments[i].point;
-                let pointB = pathB.segments[i % pathB.segments.length].point;
-
-                let dist = pointA.getDistance(pointB);
-                let maxDist = 80;  // Define maximum distance for deformation
-
-                if (dist < maxDist) {
-                    let deformFactor = (maxDist - dist) * 0.05;
-                    let deformVector = pointA.subtract(pointB).normalize().multiply(deformFactor);
-
-                    pathA.segments[i].point = pointA.add(deformVector);
-                    pathB.segments[i % pathB.segments.length].point = pointB.subtract(deformVector);
-                }
-            }
-        }
-
-        // Create multiple blobs with interactivity
-        const colors = ['#FF6347', '#4682B4', '#32CD32', '#FFD700', '#FF69B4'];
-        const positions = [
-            new paper.Point(400, 300),
-            new paper.Point(600, 400),
-            new paper.Point(800, 300),
-            new paper.Point(700, 500),
-            new paper.Point(500, 500)
-        ];
-        const links = ['#about', '#cv', '#projects', '#art', '#contact'];
-
-        // Loop to create interactive blobs
-        for (let i = 0; i < positions.length; i++) {
-            createBlob(positions[i], 80, 10, colors[i], links[i]);
-        }
-
-        // Apply crown shyness on each frame
-        paper.view.onFrame = function() {
-            applyCrownShyness();  // Ensure blobs don't overlap and deform when close
-        };
-
-    </script>
+    <!-- Include Paper.js library or p5.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="blob.js"></script>
 </body>
 </html>
